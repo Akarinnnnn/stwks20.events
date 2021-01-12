@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+	<metadata>
+		<id>stwks20.events</id>
+		<version>1.1.0</version>
+		<title>Steamworks Manual Event Dispatcher</title>
+		<authors>Fa鸽</authors>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>Steamworks Manual Event Dispatcher</description>
+		<tags>utility steam steamworks native c++ c++20 cpp cpp20</tags>
+		<license type="expression">MIT</license>
+	</metadata>
+	<files>
+		<file src="types.hpp" target="include\stwks20\" />
+		<file src="events.hpp" target="include\stwks20\" />
+		<file src="stwks20.events.targets" target="build\native\stwks20.events.targets" />
+		<file src="..\Build\bin\" target="build\native\bin" />
+		<file src="..\Build\lib\" target="build\native\lib" />
+	</files>
+</package>

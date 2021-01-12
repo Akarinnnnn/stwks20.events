@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		
+	</PropertyGroup>
+	<ItemDefinitionGroup>
+		<ClCompile>
+			<AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)..\..\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+			<LanguageStandard>stdcpplatest</LanguageStandard>
+		</ClCompile>
+		<Link>
+			<AdditionalDependencies>$(MSBuildThisFileDirectory)lib\$(Configuration)_$(PlatformShortName)\*.lib;%(AdditionalDependencies)</AdditionalDependencies>
+		</Link>
+	</ItemDefinitionGroup>
+	<Target Name="copy_stwks20_events_redist" BeforeTargets="Build">
+		<Copy SourceFiles="$(MSBuildThisFileDirectory)bin\$(Configuration)_$(PlatformShortName)\stwks20.events.dll" DestinationFolder="$(OutDir)" />
+	</Target>
+</Project>
