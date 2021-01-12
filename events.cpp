@@ -36,7 +36,7 @@ namespace steam::events::dll
 	/// Fetch the next pending callback on the given pipe, if any.  If a callback is available, true is returned
 	/// and the structure is populated.  In this case, you MUST call SteamAPI_ManualDispatch_FreeLastCallback
 	/// (after dispatching the callback) before calling SteamAPI_ManualDispatch_GetNextCallback again.
-	extern "C" __declspec(dllimport) bool __cdecl SteamAPI_ManualDispatch_GetNextCallback(HSteamPipe hSteamPipe, CallbackMsg_t* pCallbackMsg);
+	extern "C" __declspec(dllimport) bool __cdecl SteamAPI_ManualDispatch_GetNextCallback(HSteamPipe hSteamPipe, CallbackMsg_t * pCallbackMsg);
 
 	/// You must call this after dispatching the callback, if SteamAPI_ManualDispatch_GetNextCallback returns true.
 	extern "C" __declspec(dllimport) void __cdecl SteamAPI_ManualDispatch_FreeLastCallback(HSteamPipe hSteamPipe);
@@ -198,10 +198,9 @@ void steam::events::mthread_dispatcher::thread_func(void) noexcept
 					apicall->m_iCallback,
 					async_iofail
 				);
+				if constexpr(readsafe)
 				{
-					if constexpr (readsafe)
-						crlock.lock();
-
+					std::lock_guard g{ crlock };
 					auto next = ++crhandlers.begin();// noex
 					for (auto iter = crhandlers.cbegin(); next != crhandlers.cend(); ++iter, ++next) //noex
 					{
@@ -219,12 +218,31 @@ void steam::events::mthread_dispatcher::thread_func(void) noexcept
 							}
 						}
 
-						if constexpr (!readsafe)
-							crlock.lock();
-
 						crhandlers.erase_after(iter);
-						crlock.unlock();
 					}
+				}
+				else
+				{
+					auto next = ++crhandlers.begin();// noex
+					for (auto iter = crhandlers.cbegin(); next != crhandlers.cend(); ++iter, ++next) //noex
+					{
+						auto* ptr = *iter;// noex
+						if (ptr->handle == apicall->m_hAsyncCall &&
+							ptr->callback_typeid == apicall->m_iCallback)
+						{
+							try //noex
+							{
+								ptr->Invoke(buffer, async_iofail);
+							}
+							catch (const std::exception& e)
+							{
+								if (eh) eh(e);
+							}
+						}
+						std::lock_guard g{ crlock };
+						crhandlers.erase_after(iter);
+					}
+
 				}
 			}
 			else // callback
@@ -283,7 +301,7 @@ steam::events::DispatcherGuard::DispatcherGuard(bool readsafe)
 {
 	p = new mthread_dispatcher();
 
-	if(!readsafe) [[likely]]
+	if (!readsafe) [[likely]]
 		std::thread{ &mthread_dispatcher::operator(), p }.detach();
 	else
 		std::thread{ &mthread_dispatcher::ReadSafeThreadFunction, p }.detach();

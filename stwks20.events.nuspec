@@ -2,12 +2,13 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
 	<metadata>
 		<id>stwks20.events</id>
-		<version>1.1.1</version>
+		<version>1.2.0</version>
 		<title>Steamworks Manual Event Dispatcher</title>
 		<authors>Fa鸽</authors>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>Steamworks Manual Event Dispatcher</description>
 		<tags>utility steam steamworks native c++ c++20 cpp cpp20</tags>
+		<releasenotes>Fixed a lock leak in mthread_dispatcher::ReadSafeThreadFunction since 1.1.0</releasenotes>
 		<repository type="git" url="https://github.com/Akarinnnnn/stwks20.events.git" branch="master" />
 		<license type="expression">MIT</license>
 	</metadata>
