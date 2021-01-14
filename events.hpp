@@ -82,7 +82,7 @@ namespace steam::events
 	};
 
 	/// <summary>
-	/// 
+	/// 适用于使用steamworks api的小工具，如下载mod
 	/// </summary>
 	class sthread_dispatcher
 	{
@@ -122,17 +122,21 @@ namespace steam::events
 	};
 
 	/// <summary>
-	/// 推荐使用DispatcherGuard
+	/// 
 	/// </summary>
 	class mthread_dispatcher final : private sthread_dispatcher
 	{
+	private:
 		std::mutex crlock;
 		std::mutex cblock;
 
 		template<bool readsafe>
 		void thread_func(void) noexcept;
+		mthread_dispatcher();
+
+		static mthread_dispatcher* instance;
+
 	public:
-		DISPATCHER_API mthread_dispatcher();
 		DISPATCHER_API ~mthread_dispatcher();
 
 		using sthread_dispatcher::EHFunction;
@@ -149,6 +153,15 @@ namespace steam::events
 
 		DISPATCHER_API void UnRegisterCallResult(HandlerRecord* handler);
 		DISPATCHER_API void UnRegisterCallback(HandlerRecord* handler);
+		
+		DISPATCHER_API static void Initialize();
+		DISPATCHER_API static void StartThread(bool isReadSafe = false);
+		DISPATCHER_API static void Destory();
+
+		/// <summary>
+		/// 获取单例，可以缓存返回值
+		/// </summary>
+		DISPATCHER_API static mthread_dispatcher& Get();
 	};
 }
 
@@ -158,13 +171,13 @@ namespace steam::events
 	/// <para>DispatcherGuard g;</para>
 	/// <para>mthread_dispatcher* dispatcher = g.Get();</para>
 	/// </summary>
-	struct DispatcherGuard
+	struct [[deprecated("use mthread_dispatcher::Get() instead")]] DispatcherGuard
 	{
 	private:
 		mthread_dispatcher* p;
 	public:
-		DISPATCHER_API DispatcherGuard(bool isReadSafe = false);
 		DISPATCHER_API ~DispatcherGuard();
+		DISPATCHER_API DispatcherGuard(bool isReadSafe = false);
 
 		mthread_dispatcher* Get() { return p; }
 	};

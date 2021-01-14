@@ -90,7 +90,7 @@ void steam::events::sthread_dispatcher::UnRegisterCallback(HandlerRecord* handle
 
 steam::events::sthread_dispatcher::EHFunction& steam::events::sthread_dispatcher::EH() { return eh; }
 
-bool steam::events::sthread_dispatcher::IsEHInsatlled() { return !eh; }
+bool steam::events::sthread_dispatcher::IsEHInsatlled() { return (bool)eh; }
 
 void steam::events::sthread_dispatcher::operator()(void) noexcept
 {
@@ -160,12 +160,17 @@ void steam::events::sthread_dispatcher::operator()(void) noexcept
 	}
 }
 
+steam::events::mthread_dispatcher* steam::events::mthread_dispatcher::instance = nullptr;
+
 steam::events::mthread_dispatcher::~mthread_dispatcher()
 {
 	Shutdown();
 }
 
-steam::events::mthread_dispatcher::mthread_dispatcher() {}
+steam::events::mthread_dispatcher::mthread_dispatcher()
+{
+	working = false;
+}
 
 void steam::events::mthread_dispatcher::Shutdown() noexcept
 {
@@ -297,17 +302,44 @@ void steam::events::mthread_dispatcher::UnRegisterCallback(HandlerRecord* handle
 	sthread_dispatcher::UnRegisterCallback(handler);
 }
 
+void steam::events::mthread_dispatcher::Initialize()
+{
+	if (!instance)
+		instance = new mthread_dispatcher();
+}
+
+void steam::events::mthread_dispatcher::StartThread(bool readSafe)
+{
+	Initialize();
+	if (!instance->working)
+	{
+		instance->working = true;
+		if (readSafe)
+			std::thread{ &mthread_dispatcher::ReadSafeThreadFunction, instance }.detach();
+		else
+			std::thread{ &mthread_dispatcher::operator(), instance }.detach();
+	}
+}
+steam::events::mthread_dispatcher& steam::events::mthread_dispatcher::Get()
+{
+	return *instance;
+}
+
+void steam::events::mthread_dispatcher::Destory()
+{
+	delete instance;
+	instance = nullptr;
+}
+
 steam::events::DispatcherGuard::DispatcherGuard(bool readsafe)
 {
-	p = new mthread_dispatcher();
+	p = &mthread_dispatcher::Get();
 
-	if (!readsafe) [[likely]]
-		std::thread{ &mthread_dispatcher::operator(), p }.detach();
-	else
-		std::thread{ &mthread_dispatcher::ReadSafeThreadFunction, p }.detach();
+	mthread_dispatcher::StartThread(readsafe);
 }
 
 steam::events::DispatcherGuard::~DispatcherGuard()
 {
-	delete p;
+	mthread_dispatcher::Destory();
+	p = nullptr;
 }
